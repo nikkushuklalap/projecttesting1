@@ -1,0 +1,1215 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MechanicIt - Instant Mechanic in 15 Minutes</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Font Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#fffbe6',
+                            100: '#fff3b3',
+                            400: '#ffcb00', // Blinkit-like bright energetic yellow/amber
+                            500: '#f59e0b',
+                            600: '#d97706',
+                            700: '#b45309',
+                            dark: '#0f172a',
+                            accent: '#10b981' // Emergency Green
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        .pulse-ring {
+            box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+            animation: pulse-ring 1.5s infinite cubic-bezier(0.66, 0, 0, 1);
+        }
+        @keyframes pulse-ring {
+            to {
+                box-shadow: 0 0 0 15px rgba(239, 68, 68, 0);
+            }
+        }
+        .ping-green {
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+            animation: ping-green 1.5s infinite cubic-bezier(0.66, 0, 0, 1);
+        }
+        @keyframes ping-green {
+            to {
+                box-shadow: 0 0 0 12px rgba(16, 185, 129, 0);
+            }
+        }
+        .map-grid {
+            background-size: 30px 30px;
+            background-image: radial-gradient(circle, #cbd5e1 1px, transparent 1px);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans h-full flex flex-col antialiased selection:bg-brand-400 selection:text-black">
+
+    <!-- HEADER / NAVIGATION -->
+    <header class="sticky top-0 z-40 bg-white border-b border-gray-200 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16 gap-2 sm:gap-4">
+                
+                <!-- Logo & Brand -->
+                <div class="flex items-center gap-2 cursor-pointer" onclick="scrollToTop()">
+                    <div class="bg-amber-400 text-slate-900 font-black text-2xl px-2.5 py-1 rounded-xl shadow-sm flex items-center gap-1.5 tracking-tight border border-amber-300">
+                        <i class="fa-solid fa-wrench text-xl text-slate-900"></i>
+                        <span>Mechanic<span class="text-emerald-700">It</span></span>
+                    </div>
+                </div>
+
+                <!-- Live Location Selector -->
+                <div class="hidden md:flex items-center gap-2 text-sm bg-gray-100 hover:bg-gray-200/80 transition px-3 py-2 rounded-xl cursor-pointer border border-gray-200/60" onclick="openLocationModal()">
+                    <i class="fa-solid fa-location-dot text-emerald-600 text-base animate-bounce"></i>
+                    <div class="leading-tight text-left">
+                        <div class="font-bold text-gray-900 flex items-center gap-1">
+                            <span id="header-location-name">Boring Road, Patna</span>
+                            <i class="fa-solid fa-chevron-down text-xs text-gray-500"></i>
+                        </div>
+                        <div class="text-xs text-gray-500 font-medium truncate max-w-[150px]" id="header-location-sub">Patna, Bihar 800001</div>
+                    </div>
+                </div>
+
+                <!-- Search Bar -->
+                <div class="flex-1 max-w-lg mx-2">
+                    <div class="relative">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                        <input type="text" id="service-search-input" onkeyup="filterServices()" placeholder="Search 'flat tire', 'jumpstart', 'oil change'..." 
+                            class="w-full pl-10 pr-4 py-2 bg-gray-100 border border-transparent focus:border-amber-400 focus:bg-white rounded-xl text-sm font-medium focus:outline-none transition shadow-inner">
+                    </div>
+                </div>
+
+                <!-- Right Action Buttons -->
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <button onclick="toggleSOSModal()" class="hidden sm:flex items-center gap-1.5 bg-red-600 hover:bg-red-700 text-white font-bold text-xs sm:text-sm px-3.5 py-2 rounded-xl transition shadow-md pulse-ring">
+                        <i class="fa-solid fa-truck-medical"></i>
+                        <span>15-Min SOS</span>
+                    </button>
+
+                    <!-- Cart Trigger -->
+                    <button onclick="toggleCartDrawer()" class="relative flex items-center gap-2 bg-slate-900 text-white hover:bg-slate-800 px-3.5 py-2 rounded-xl transition font-semibold text-sm shadow-sm">
+                        <div class="relative">
+                            <i class="fa-solid fa-bag-shopping text-amber-400 text-base"></i>
+                            <span id="cart-badge-count" class="hidden absolute -top-2 -right-2 bg-emerald-500 text-white text-[10px] font-black w-4 h-4 rounded-full flex items-center justify-center">0</span>
+                        </div>
+                        <span class="hidden sm:inline">Cart</span>
+                        <span id="cart-header-total" class="font-bold text-amber-400 text-xs sm:text-sm">₹0</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Mobile Location Bar -->
+            <div class="flex md:hidden items-center justify-between py-2 border-t border-gray-100 text-xs text-gray-600" onclick="openLocationModal()">
+                <div class="flex items-center gap-1.5 truncate">
+                    <i class="fa-solid fa-location-dot text-emerald-600"></i>
+                    <span class="font-bold text-gray-800" id="mobile-location-name">Boring Road, Patna</span>
+                    <span class="text-gray-400">• ETA: 12 Mins</span>
+                </div>
+                <span class="text-amber-600 font-semibold flex items-center gap-1">Change <i class="fa-solid fa-chevron-right text-[10px]"></i></span>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTAINER -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-6">
+
+        <!-- EMERGENCY SOS BANNER (Blinkit Quick Delivery Style) -->
+        <section class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white p-5 sm:p-6 shadow-lg border border-slate-700">
+            <div class="absolute -right-8 -bottom-8 opacity-10 text-9xl font-black text-amber-400 select-none pointer-events-none">
+                <i class="fa-solid fa-gauge-high"></i>
+            </div>
+            
+            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 relative z-10">
+                <div class="space-y-1.5 max-w-2xl">
+                    <div class="inline-flex items-center gap-2 bg-amber-400/20 border border-amber-400/40 text-amber-300 px-3 py-1 rounded-full text-xs font-extrabold tracking-wide uppercase">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                        ⚡ Superfast Dispatch • 10-15 Mins Delivery
+                    </div>
+                    <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                        Stranded on the road? <span class="text-amber-400">Mechanic reaches in 15 mins!</span>
+                    </h1>
+                    <p class="text-sm text-gray-300">
+                        Patna's instant auto repair service. On-spot puncture repair, battery jumpstart, towing, and emergency fuel delivered straight to your GPS location.
+                    </p>
+                </div>
+
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
+                    <button onclick="triggerInstantSOS()" class="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-red-600 hover:bg-red-500 text-white font-extrabold text-base px-6 py-3 rounded-xl transition shadow-lg shadow-red-600/30 active:scale-95">
+                        <i class="fa-solid fa-bolt text-amber-300 text-lg"></i>
+                        <span>ONE-TAP SOS DISPATCH</span>
+                    </button>
+                    <button onclick="scrollToSection('directory-section')" class="flex-1 sm:flex-none flex items-center justify-center gap-1.5 bg-slate-700 hover:bg-slate-600 text-gray-200 font-bold text-sm px-4 py-3 rounded-xl transition">
+                        <i class="fa-solid fa-phone"></i>
+                        <span>Call Nearby Mechanics</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Quick Stats Ticker -->
+            <div class="mt-4 pt-4 border-t border-slate-700/60 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs text-gray-300">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-shield-halved text-emerald-400"></i>
+                    <span>Verified Mechanics</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-hand-holding-dollar text-amber-400"></i>
+                    <span>Upfront transparent prices</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-clock text-blue-400"></i>
+                    <span>Avg Arrival: 12.4 Mins</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-star text-yellow-400"></i>
+                    <span>4.8/5 Rating (12k+ Repairs)</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- CATEGORY NAVIGATION TABS -->
+        <section class="sticky top-[65px] z-30 bg-gray-50/95 backdrop-blur-md py-2 border-b border-gray-200">
+            <div class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+                <button onclick="filterCategory('all')" id="cat-btn-all" class="cat-tab active flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition bg-slate-900 text-white shadow-sm">
+                    <i class="fa-solid fa-border-all"></i> All Services
+                </button>
+                <button onclick="filterCategory('emergency')" id="cat-btn-emergency" class="cat-tab flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition bg-white text-gray-700 border border-gray-200 hover:bg-gray-100">
+                    <i class="fa-solid fa-truck-pickup text-red-500"></i> Roadside Assistance
+                </button>
+                <button onclick="filterCategory('maintenance')" id="cat-btn-maintenance" class="cat-tab flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition bg-white text-gray-700 border border-gray-200 hover:bg-gray-100">
+                    <i class="fa-solid fa-wrench text-blue-500"></i> Periodic Maintenance
+                </button>
+                <button onclick="filterCategory('twowheeler')" id="cat-btn-twowheeler" class="cat-tab flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition bg-white text-gray-700 border border-gray-200 hover:bg-gray-100">
+                    <i class="fa-solid fa-motorcycle text-amber-500"></i> Two-Wheeler Specials
+                </button>
+                <button onclick="filterCategory('ev')" id="cat-btn-ev" class="cat-tab flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition bg-white text-gray-700 border border-gray-200 hover:bg-gray-100">
+                    <i class="fa-solid fa-charging-station text-emerald-500"></i> EV Care
+                </button>
+            </div>
+        </section>
+
+        <!-- SERVICES GRID -->
+        <section class="space-y-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-xl font-extrabold text-gray-900" id="category-title">All Auto Repair & Assistance Services</h2>
+                    <p class="text-xs text-gray-500">Select a service to dispatch a technician directly to your location</p>
+                </div>
+                <span class="text-xs font-semibold bg-amber-100 text-amber-800 px-2.5 py-1 rounded-md" id="service-count">9 Services Available</span>
+            </div>
+
+            <!-- Service Cards Container -->
+            <div id="services-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Javascript dynamically renders cards here -->
+            </div>
+        </section>
+
+        <!-- DIRECTORY / NEARBY MECHANICS -->
+        <section id="directory-section" class="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-100 pb-3">
+                <div>
+                    <h2 class="text-lg font-extrabold text-gray-900 flex items-center gap-2">
+                        <i class="fa-solid fa-user-gear text-amber-500"></i>
+                        Verified Nearby Mechanics & Garages
+                    </h2>
+                    <p class="text-xs text-gray-500">Available for direct phone call or priority home/roadside visit</p>
+                </div>
+                <div class="text-xs bg-emerald-50 border border-emerald-200 text-emerald-700 px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 w-fit">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                    5 Mechanics Active Near Patna
+                </div>
+            </div>
+
+            <!-- Mechanic List -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="mechanics-list">
+                <!-- Dynamic mechanic cards populated via JS -->
+            </div>
+        </section>
+
+        <!-- HOW IT WORKS SECTION -->
+        <section class="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl p-6 border border-amber-200/60">
+            <h3 class="text-center text-lg font-extrabold text-gray-900 mb-6">How MechanicIt Works in 3 Easy Steps</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-white p-4 rounded-xl border border-amber-100 text-center space-y-2 shadow-sm">
+                    <div class="w-12 h-12 bg-amber-400 text-slate-900 rounded-full flex items-center justify-center font-black text-xl mx-auto shadow">1</div>
+                    <h4 class="font-bold text-gray-900 text-sm">Select Service or Tap SOS</h4>
+                    <p class="text-xs text-gray-600">Choose tire repair, battery boost, towing, or general checkup. Detects GPS automatically.</p>
+                </div>
+                <div class="bg-white p-4 rounded-xl border border-amber-100 text-center space-y-2 shadow-sm">
+                    <div class="w-12 h-12 bg-amber-400 text-slate-900 rounded-full flex items-center justify-center font-black text-xl mx-auto shadow">2</div>
+                    <h4 class="font-bold text-gray-900 text-sm">Mechanic Assigned in 2 Mins</h4>
+                    <p class="text-xs text-gray-600">Nearest certified auto expert accepts request and starts heading your way with live map tracking.</p>
+                </div>
+                <div class="bg-white p-4 rounded-xl border border-amber-100 text-center space-y-2 shadow-sm">
+                    <div class="w-12 h-12 bg-amber-400 text-slate-900 rounded-full flex items-center justify-center font-black text-xl mx-auto shadow">3</div>
+                    <h4 class="font-bold text-gray-900 text-sm">On-Spot Service & Easy Pay</h4>
+                    <p class="text-xs text-gray-600">Fixing done on location. Pay securely via UPI, Card, or Cash after work completion.</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-slate-900 text-gray-400 text-xs py-8 border-t border-slate-800 mt-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-800 pb-6">
+                <div>
+                    <div class="text-amber-400 font-extrabold text-xl flex items-center gap-2 mb-1">
+                        <i class="fa-solid fa-wrench"></i> MechanicIt
+                    </div>
+                    <p class="text-gray-400 text-xs">Instant 15-Minute Auto Repair & Emergency Roadside Support Platform.</p>
+                </div>
+                <div class="flex flex-wrap gap-4 font-semibold text-gray-300">
+                    <a href="#" class="hover:text-amber-400">Emergency SOS</a>
+                    <a href="#" class="hover:text-amber-400">Garages Near Me</a>
+                    <a href="#" class="hover:text-amber-400">Join as Mechanic</a>
+                    <a href="#" class="hover:text-amber-400">Terms of Service</a>
+                </div>
+            </div>
+            <div class="flex flex-col sm:flex-row items-center justify-between text-gray-500 gap-2">
+                <p>© 2026 MechanicIt Technologies India Pvt. Ltd. All rights reserved.</p>
+                <div class="flex gap-4 text-base text-gray-400">
+                    <i class="fa-brands fa-whatsapp hover:text-emerald-400 cursor-pointer"></i>
+                    <i class="fa-brands fa-twitter hover:text-sky-400 cursor-pointer"></i>
+                    <i class="fa-brands fa-instagram hover:text-pink-400 cursor-pointer"></i>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- FLOATING CART / RECOVERY BAR (MOBILE ONLY) -->
+    <div id="mobile-cart-bar" class="fixed bottom-0 left-0 right-0 bg-slate-900 text-white p-3 z-30 sm:hidden shadow-2xl border-t border-slate-800 hidden">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <div class="bg-amber-400 text-slate-950 font-extrabold w-8 h-8 rounded-lg flex items-center justify-center text-xs" id="mobile-cart-count">1</div>
+                <div>
+                    <div class="text-xs text-gray-400">Selected Services</div>
+                    <div class="text-sm font-bold text-amber-400" id="mobile-cart-price">₹0</div>
+                </div>
+            </div>
+            <button onclick="toggleCartDrawer()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-xs px-4 py-2.5 rounded-xl transition flex items-center gap-1.5 shadow">
+                <span>VIEW CART</span>
+                <i class="fa-solid fa-arrow-right"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- CART / CHECKOUT DRAWER -->
+    <div id="cart-drawer-backdrop" onclick="toggleCartDrawer()" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 transition-opacity hidden opacity-0"></div>
+    <div id="cart-drawer" class="fixed top-0 right-0 bottom-0 w-full sm:w-[420px] bg-white z-50 shadow-2xl transform transition-transform duration-300 translate-x-full flex flex-col">
+        
+        <!-- Drawer Header -->
+        <div class="p-4 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800">
+            <div class="flex items-center gap-2">
+                <i class="fa-solid fa-bag-shopping text-amber-400 text-lg"></i>
+                <h3 class="font-extrabold text-base">Service Summary</h3>
+            </div>
+            <button onclick="toggleCartDrawer()" class="text-gray-400 hover:text-white text-lg p-1">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <!-- Location Pick in Drawer -->
+        <div class="p-3 bg-amber-50 border-b border-amber-200/80 flex items-center justify-between text-xs">
+            <div class="flex items-center gap-2 truncate">
+                <i class="fa-solid fa-location-dot text-emerald-600 text-sm"></i>
+                <div>
+                    <span class="font-bold text-gray-900 block" id="drawer-location-name">Boring Road, Patna</span>
+                    <span class="text-gray-500 text-[11px]">Mechanic arrival in ~12 mins</span>
+                </div>
+            </div>
+            <button onclick="openLocationModal()" class="text-amber-700 font-bold hover:underline">Change</button>
+        </div>
+
+        <!-- Items Container -->
+        <div class="flex-1 overflow-y-auto p-4 space-y-4" id="cart-items-container">
+            <!-- Rendered via JS -->
+        </div>
+
+        <!-- Bill Breakdown & Checkout -->
+        <div class="border-t border-gray-200 p-4 bg-gray-50 space-y-3">
+            <div class="space-y-1.5 text-xs text-gray-600">
+                <div class="flex justify-between">
+                    <span>Service Charges Total</span>
+                    <span class="font-semibold text-gray-900" id="bill-subtotal">₹0</span>
+                </div>
+                <div class="flex justify-between">
+                    <span>Emergency Convenience Fee</span>
+                    <span class="font-semibold text-gray-900" id="bill-fee">₹49</span>
+                </div>
+                <div class="flex justify-between text-emerald-600 font-semibold">
+                    <span>Mechanic Travel / Distance Fee</span>
+                    <span>FREE</span>
+                </div>
+                <div class="flex justify-between pt-2 border-t border-gray-200 text-sm font-extrabold text-gray-900">
+                    <span>To Pay</span>
+                    <span class="text-amber-600" id="bill-total">₹0</span>
+                </div>
+            </div>
+
+            <button onclick="proceedToPayment()" id="checkout-btn" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold py-3.5 rounded-xl transition shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                <span>PROCEED TO PAYMENT</span>
+                <i class="fa-solid fa-arrow-right"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- MULTI-PAYMENT MODAL -->
+    <div id="payment-modal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden border border-gray-100 flex flex-col max-h-[90vh]">
+            
+            <!-- Modal Header -->
+            <div class="p-4 bg-slate-900 text-white flex items-center justify-between">
+                <div>
+                    <h3 class="font-extrabold text-base">Select Payment Method</h3>
+                    <p class="text-xs text-amber-400">Total Amount: <span id="payment-total-display" class="font-bold">₹0</span></p>
+                </div>
+                <button onclick="closePaymentModal()" class="text-gray-400 hover:text-white text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Payment Methods Tabs -->
+            <div class="flex border-b border-gray-200 bg-gray-50 text-xs font-bold text-gray-600 overflow-x-auto">
+                <button onclick="switchPayTab('upi')" id="pay-tab-upi" class="pay-tab active flex-1 py-3 px-3 text-center border-b-2 border-emerald-600 text-emerald-700 bg-white">
+                    <i class="fa-solid fa-qrcode text-sm"></i> UPI / QR
+                </button>
+                <button onclick="switchPayTab('card')" id="pay-tab-card" class="pay-tab flex-1 py-3 px-3 text-center border-b-2 border-transparent hover:text-gray-900">
+                    <i class="fa-solid fa-credit-card text-sm"></i> Card
+                </button>
+                <button onclick="switchPayTab('cod')" id="pay-tab-cod" class="pay-tab flex-1 py-3 px-3 text-center border-b-2 border-transparent hover:text-gray-900">
+                    <i class="fa-solid fa-money-bill-wave text-sm"></i> Cash on Service
+                </button>
+            </div>
+
+            <!-- Modal Body Content -->
+            <div class="p-5 flex-1 overflow-y-auto space-y-4">
+                
+                <!-- UPI Content -->
+                <div id="pay-content-upi" class="pay-content space-y-4 text-center">
+                    <div class="bg-amber-50 border border-amber-200 p-3 rounded-xl text-xs text-amber-900">
+                        Scan QR code with Google Pay, PhonePe, Paytm or BHIM UPI
+                    </div>
+                    
+                    <!-- Simulated QR Code -->
+                    <div class="bg-white p-3 border-2 border-dashed border-gray-300 rounded-xl inline-block shadow-inner relative">
+                        <img id="upi-qr-image" src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=upi://pay?pa=mechanicit@upi&pn=MechanicIt&am=499" alt="UPI QR Code" class="w-44 h-44 mx-auto">
+                        <div class="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition bg-black/10 rounded-xl">
+                            <span class="bg-slate-900 text-white text-[10px] font-bold px-2 py-1 rounded">Scan with any App</span>
+                        </div>
+                    </div>
+
+                    <div class="text-xs text-gray-500 font-medium">OR Enter UPI ID</div>
+                    <div class="flex gap-2">
+                        <input type="text" placeholder="username@upi / mobile@ybl" id="upi-id-input" class="flex-1 px-3 py-2 border border-gray-300 rounded-xl text-xs focus:outline-none focus:border-emerald-500">
+                        <button onclick="verifyAndPayUPI()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-4 py-2 rounded-xl transition">Verify & Pay</button>
+                    </div>
+
+                    <div class="flex items-center justify-center gap-4 pt-2 opacity-80">
+                        <span class="text-xs font-bold text-gray-400">Supported:</span>
+                        <i class="fa-brands fa-google-pay text-2xl text-blue-600"></i>
+                        <i class="fa-solid fa-mobile-screen text-xl text-purple-600"></i>
+                        <span class="text-xs font-black text-blue-800">Paytm</span>
+                    </div>
+                </div>
+
+                <!-- Card Content -->
+                <div id="pay-content-card" class="pay-content hidden space-y-3">
+                    <div>
+                        <label class="text-xs font-bold text-gray-700 block mb-1">Card Number</label>
+                        <div class="relative">
+                            <input type="text" maxlength="19" placeholder="4532 •••• •••• 8901" class="w-full px-3 py-2 border border-gray-300 rounded-xl text-xs pl-9 focus:outline-none focus:border-amber-400">
+                            <i class="fa-solid fa-credit-card absolute left-3 top-2.5 text-gray-400 text-xs"></i>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="text-xs font-bold text-gray-700 block mb-1">Expiry Date</label>
+                            <input type="text" placeholder="MM/YY" maxlength="5" class="w-full px-3 py-2 border border-gray-300 rounded-xl text-xs focus:outline-none focus:border-amber-400">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-gray-700 block mb-1">CVV</label>
+                            <input type="password" placeholder="•••" maxlength="4" class="w-full px-3 py-2 border border-gray-300 rounded-xl text-xs focus:outline-none focus:border-amber-400">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-gray-700 block mb-1">Cardholder Name</label>
+                        <input type="text" placeholder="As printed on card" class="w-full px-3 py-2 border border-gray-300 rounded-xl text-xs focus:outline-none focus:border-amber-400">
+                    </div>
+                </div>
+
+                <!-- COD Content -->
+                <div id="pay-content-cod" class="pay-content hidden text-center space-y-3 py-4">
+                    <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-2xl">
+                        <i class="fa-solid fa-hand-holding-dollar"></i>
+                    </div>
+                    <h4 class="font-bold text-gray-900 text-sm">Pay After Repair Completion</h4>
+                    <p class="text-xs text-gray-500 max-w-xs mx-auto">Pay the mechanic directly in cash or via UPI QR code after your vehicle issue is completely inspected and repaired.</p>
+                </div>
+
+            </div>
+
+            <!-- Modal Action Footer -->
+            <div class="p-4 bg-gray-50 border-t border-gray-200">
+                <button onclick="confirmOrderAndStartTracking()" class="w-full bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold py-3 rounded-xl transition shadow flex items-center justify-center gap-2 text-sm">
+                    <i class="fa-solid fa-lock text-xs"></i>
+                    <span id="pay-action-btn-text">PAY NOW & DISPATCH MECHANIC</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- LIVE MECHANIC TRACKING MODAL (Blinkit Order Progress) -->
+    <div id="tracking-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-4 hidden">
+        <div class="bg-white w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden border border-gray-100 flex flex-col max-h-[95vh]">
+            
+            <!-- Header -->
+            <div class="bg-slate-900 text-white p-4 flex items-center justify-between">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
+                        <h3 class="font-extrabold text-sm sm:text-base">Live Service Dispatch</h3>
+                    </div>
+                    <p class="text-xs text-gray-400">Order ID: <span id="tracking-order-id" class="font-mono text-amber-400">#MCH-8921</span></p>
+                </div>
+                <button onclick="closeTrackingModal()" class="text-gray-400 hover:text-white text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Simulated Map Interface -->
+            <div class="relative bg-slate-100 h-48 sm:h-56 map-grid flex items-center justify-center overflow-hidden border-b border-gray-200">
+                <!-- Location Pin User -->
+                <div class="absolute bottom-10 right-12 flex flex-col items-center">
+                    <span class="bg-slate-900 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow mb-1">Your Location</span>
+                    <i class="fa-solid fa-location-dot text-red-600 text-2xl animate-bounce"></i>
+                </div>
+
+                <!-- Mechanic Icon (Animated along path) -->
+                <div id="tracking-mechanic-pin" class="absolute top-10 left-10 flex flex-col items-center transition-all duration-1000 ease-linear">
+                    <span class="bg-emerald-600 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow mb-1 flex items-center gap-1">
+                        <i class="fa-solid fa-motorcycle text-[10px]"></i> <span id="mechanic-pin-name">Rajesh Mechanic</span>
+                    </span>
+                    <div class="bg-amber-400 text-slate-950 p-2 rounded-full shadow-lg border-2 border-white ping-green">
+                        <i class="fa-solid fa-wrench text-xs"></i>
+                    </div>
+                </div>
+
+                <!-- Simulated ETA Box -->
+                <div class="absolute top-3 left-3 bg-white/95 backdrop-blur px-3 py-1.5 rounded-xl border border-gray-200 shadow-sm text-xs font-bold text-gray-800">
+                    ⏱️ ETA: <span id="live-eta-countdown" class="text-amber-600 font-extrabold">12 Mins</span>
+                </div>
+            </div>
+
+            <!-- Progress Stepper -->
+            <div class="p-4 bg-gray-50 border-b border-gray-200">
+                <div class="flex items-center justify-between relative text-xs">
+                    <!-- Progress Line -->
+                    <div class="absolute top-3 left-4 right-4 h-1 bg-gray-200 z-0">
+                        <div id="tracking-progress-bar" class="h-full bg-emerald-500 transition-all duration-500" style="width: 25%;"></div>
+                    </div>
+
+                    <!-- Steps -->
+                    <div class="relative z-10 flex flex-col items-center gap-1">
+                        <div id="step-1-icon" class="w-7 h-7 rounded-full bg-emerald-600 text-white font-bold flex items-center justify-center text-xs">1</div>
+                        <span class="text-[10px] font-bold text-gray-800">Confirmed</span>
+                    </div>
+                    <div class="relative z-10 flex flex-col items-center gap-1">
+                        <div id="step-2-icon" class="w-7 h-7 rounded-full bg-gray-200 text-gray-600 font-bold flex items-center justify-center text-xs">2</div>
+                        <span class="text-[10px] font-bold text-gray-500">Assigned</span>
+                    </div>
+                    <div class="relative z-10 flex flex-col items-center gap-1">
+                        <div id="step-3-icon" class="w-7 h-7 rounded-full bg-gray-200 text-gray-600 font-bold flex items-center justify-center text-xs">3</div>
+                        <span class="text-[10px] font-bold text-gray-500">En Route</span>
+                    </div>
+                    <div class="relative z-10 flex flex-col items-center gap-1">
+                        <div id="step-4-icon" class="w-7 h-7 rounded-full bg-gray-200 text-gray-600 font-bold flex items-center justify-center text-xs">4</div>
+                        <span class="text-[10px] font-bold text-gray-500">Arrived</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Assigned Mechanic Info Card -->
+            <div class="p-4 space-y-3 flex-1 overflow-y-auto">
+                <div class="flex items-center justify-between p-3 bg-amber-50 rounded-xl border border-amber-200">
+                    <div class="flex items-center gap-3">
+                        <img id="assigned-mechanic-avatar" src="https://images.unsplash.com/photo-1560250097-0b93528c311a?w=100&auto=format&fit=crop&q=80" class="w-12 h-12 rounded-full object-cover border-2 border-amber-400">
+                        <div>
+                            <h4 id="assigned-mechanic-name" class="font-extrabold text-sm text-gray-900">Rajesh Kumar</h4>
+                            <p class="text-xs text-gray-600 flex items-center gap-1">
+                                <i class="fa-solid fa-star text-amber-500"></i> 4.9 (1,240 repairs)
+                            </p>
+                            <p class="text-[11px] text-emerald-700 font-semibold" id="assigned-mechanic-status">Assigned & Preparing toolkit...</p>
+                        </div>
+                    </div>
+                    <a id="mechanic-call-btn" href="tel:+919876543210" class="bg-slate-900 text-white hover:bg-slate-800 p-2.5 rounded-xl text-xs font-bold flex items-center gap-1">
+                        <i class="fa-solid fa-phone text-emerald-400"></i>
+                        <span>Call</span>
+                    </a>
+                </div>
+
+                <div class="text-xs text-gray-600 space-y-1 bg-white p-3 rounded-xl border border-gray-200">
+                    <div class="font-bold text-gray-800 mb-1">Service Details:</div>
+                    <div id="tracking-service-summary" class="text-gray-600 truncate">Flat Tire Repair & Inspection</div>
+                    <div class="text-gray-500">Location: <span id="tracking-address-text" class="font-medium text-gray-800">Boring Road, Patna, Bihar</span></div>
+                </div>
+            </div>
+
+            <div class="p-3 bg-gray-50 border-t border-gray-200 text-center">
+                <button onclick="closeTrackingModal()" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-2.5 rounded-xl text-xs">
+                    Minimize Tracking Window
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- LOCATION PICKER MODAL -->
+    <div id="location-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl p-5 space-y-4">
+            <div class="flex items-center justify-between border-b border-gray-100 pb-2">
+                <h3 class="font-extrabold text-gray-900 text-base flex items-center gap-2">
+                    <i class="fa-solid fa-location-crosshairs text-emerald-600"></i> Choose Repair Location
+                </h3>
+                <button onclick="closeLocationModal()" class="text-gray-400 hover:text-gray-600 text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <button onclick="detectGPSLocation()" class="w-full bg-emerald-50 hover:bg-emerald-100/80 border border-emerald-200 text-emerald-800 font-bold p-3 rounded-xl transition flex items-center justify-center gap-2 text-xs">
+                <i class="fa-solid fa-location-arrow text-emerald-600 animate-pulse"></i>
+                <span>Detect Current GPS Location</span>
+            </button>
+
+            <div class="text-center text-xs text-gray-400 font-semibold">- OR SELECT POPULAR LOCATIONS -</div>
+
+            <div class="space-y-2 max-h-48 overflow-y-auto">
+                <div onclick="setLocation('Boring Road, Patna', 'Patna, Bihar 800001')" class="p-2.5 rounded-xl hover:bg-gray-100 cursor-pointer text-xs flex items-center justify-between border border-gray-100">
+                    <div>
+                        <div class="font-bold text-gray-800">Boring Road, Patna</div>
+                        <div class="text-gray-500 text-[11px]">Patna, Bihar 800001</div>
+                    </div>
+                    <span class="text-emerald-600 font-bold text-[10px] bg-emerald-50 px-2 py-0.5 rounded">⚡ 12 mins</span>
+                </div>
+                <div onclick="setLocation('Kankarbagh, Patna', 'Patna, Bihar 800020')" class="p-2.5 rounded-xl hover:bg-gray-100 cursor-pointer text-xs flex items-center justify-between border border-gray-100">
+                    <div>
+                        <div class="font-bold text-gray-800">Kankarbagh, Patna</div>
+                        <div class="text-gray-500 text-[11px]">Patna, Bihar 800020</div>
+                    </div>
+                    <span class="text-emerald-600 font-bold text-[10px] bg-emerald-50 px-2 py-0.5 rounded">⚡ 10 mins</span>
+                </div>
+                <div onclick="setLocation('Patliputra Colony, Patna', 'Patna, Bihar 800013')" class="p-2.5 rounded-xl hover:bg-gray-100 cursor-pointer text-xs flex items-center justify-between border border-gray-100">
+                    <div>
+                        <div class="font-bold text-gray-800">Patliputra Colony, Patna</div>
+                        <div class="text-gray-500 text-[11px]">Patna, Bihar 800013</div>
+                    </div>
+                    <span class="text-emerald-600 font-bold text-[10px] bg-emerald-50 px-2 py-0.5 rounded">⚡ 15 mins</span>
+                </div>
+                <div onclick="setLocation('Bailey Road, Patna', 'Patna, Bihar 800014')" class="p-2.5 rounded-xl hover:bg-gray-100 cursor-pointer text-xs flex items-center justify-between border border-gray-100">
+                    <div>
+                        <div class="font-bold text-gray-800">Bailey Road, Patna</div>
+                        <div class="text-gray-500 text-[11px]">Patna, Bihar 800014</div>
+                    </div>
+                    <span class="text-emerald-600 font-bold text-[10px] bg-emerald-50 px-2 py-0.5 rounded">⚡ 14 mins</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT APP LOGIC -->
+    <script>
+        // DATA SOURCES
+        const SERVICES_DATA = [
+            {
+                id: 'srv-1',
+                title: 'Flat Tire On-Spot Repair',
+                category: 'emergency',
+                price: 249,
+                eta: '10-12 mins',
+                rating: '4.9',
+                reviews: '3.2k',
+                badge: 'BESTSELLER',
+                badgeColor: 'bg-amber-100 text-amber-800',
+                icon: 'fa-solid fa-circle-dot text-amber-500',
+                desc: 'On-site puncture repair, tubeless tire patch, air pressure check & spare wheel swap.'
+            },
+            {
+                id: 'srv-2',
+                title: 'Emergency Battery Jumpstart',
+                category: 'emergency',
+                price: 299,
+                eta: '10-15 mins',
+                rating: '4.8',
+                reviews: '2.8k',
+                badge: 'EXPRESS',
+                badgeColor: 'bg-red-100 text-red-800',
+                icon: 'fa-solid fa-car-battery text-red-500',
+                desc: 'Instant 12V battery jumpstart using heavy-duty booster cables or portable power pack.'
+            },
+            {
+                id: 'srv-3',
+                title: 'Flatbed Towing Service',
+                category: 'emergency',
+                price: 999,
+                eta: '15-20 mins',
+                rating: '4.9',
+                reviews: '1.1k',
+                badge: 'HEAVY DUTY',
+                badgeColor: 'bg-slate-100 text-slate-800',
+                icon: 'fa-solid fa-truck-pickup text-slate-700',
+                desc: 'Safe hydraulic flatbed tow truck to nearest workshop or desired destination up to 10km.'
+            },
+            {
+                id: 'srv-4',
+                title: 'Full Engine Oil Service',
+                category: 'maintenance',
+                price: 1499,
+                eta: '25-30 mins',
+                rating: '4.7',
+                reviews: '850',
+                badge: 'HOME SERVICE',
+                badgeColor: 'bg-blue-100 text-blue-800',
+                icon: 'fa-solid fa-oil-can text-blue-500',
+                desc: 'Engine oil replacement, oil filter check, fluid top-up & complete 21-point vehicle inspection.'
+            },
+            {
+                id: 'srv-5',
+                title: 'Car AC Cooling Check & Gas Top-up',
+                category: 'maintenance',
+                price: 799,
+                eta: '20 mins',
+                rating: '4.8',
+                reviews: '1.4k',
+                badge: 'SUMMER SPECIAL',
+                badgeColor: 'bg-sky-100 text-sky-800',
+                icon: 'fa-solid fa-snowflake text-sky-500',
+                desc: 'AC refrigerant gas pressure check, filter cleaning & instant leak detection on location.'
+            },
+            {
+                id: 'srv-6',
+                title: 'Two-Wheeler Puncture & Chain Lube',
+                category: 'twowheeler',
+                price: 199,
+                eta: '10 mins',
+                rating: '4.9',
+                reviews: '4.5k',
+                badge: 'FASTEST DISPATCH',
+                badgeColor: 'bg-emerald-100 text-emerald-800',
+                icon: 'fa-solid fa-motorcycle text-emerald-600',
+                desc: 'Specialized bike puncture repair, chain tightening, lubrication & clutch adjustment.'
+            },
+            {
+                id: 'srv-7',
+                title: 'Key Lockout / Door Unlock',
+                category: 'emergency',
+                price: 499,
+                eta: '15 mins',
+                rating: '4.9',
+                reviews: '620',
+                badge: 'SAFE UNLOCK',
+                badgeColor: 'bg-purple-100 text-purple-800',
+                icon: 'fa-solid fa-key text-purple-500',
+                desc: 'Non-destructive vehicle door unlocking service by certified lock experts.'
+            },
+            {
+                id: 'srv-8',
+                title: 'EV Portable Charger On-Demand',
+                category: 'ev',
+                price: 599,
+                eta: '12-15 mins',
+                rating: '4.9',
+                reviews: '310',
+                badge: 'EV SPECIAL',
+                badgeColor: 'bg-emerald-100 text-emerald-800',
+                icon: 'fa-solid fa-charging-station text-emerald-500',
+                desc: 'Mobile high-speed EV charger van arrives to give your EV up to 15-20km emergency range.'
+            },
+            {
+                id: 'srv-9',
+                title: 'Emergency Fuel Delivery (5 Litres)',
+                category: 'emergency',
+                price: 349,
+                eta: '12 mins',
+                rating: '4.8',
+                reviews: '1.9k',
+                badge: 'PETROL / DIESEL',
+                badgeColor: 'bg-orange-100 text-orange-800',
+                icon: 'fa-solid fa-gas-pump text-orange-500',
+                desc: '5 Litres of Petrol or Diesel delivered safely in approved container directly to stranded vehicle.'
+            }
+        ];
+
+        const MECHANICS_DIRECTORY = [
+            {
+                id: 'mech-1',
+                name: 'Rajesh Auto Works & Emergency Assistance',
+                mechanicName: 'Rajesh Kumar',
+                phone: '+919876543210',
+                rating: '4.9',
+                dist: '0.8 km away',
+                eta: '8 mins',
+                specialty: 'Flat Tires & Engine Diagnostics',
+                avatar: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=100&auto=format&fit=crop&q=80'
+            },
+            {
+                id: 'mech-2',
+                name: 'Patna Quick Towing & Jumpstart Centre',
+                mechanicName: 'Amit Singh',
+                phone: '+919812345678',
+                rating: '4.8',
+                dist: '1.4 km away',
+                eta: '12 mins',
+                specialty: 'Flatbed Towing & Lockout',
+                avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80'
+            },
+            {
+                id: 'mech-3',
+                name: 'Speedy Two-Wheeler On-Spot Repair',
+                mechanicName: 'Sonu Verma',
+                phone: '+919934567890',
+                rating: '4.9',
+                dist: '1.1 km away',
+                eta: '10 mins',
+                specialty: 'Bike Puncture & Chain Care',
+                avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80'
+            }
+        ];
+
+        // GLOBAL APP STATE
+        let cart = [];
+        let currentLocation = {
+            name: 'Boring Road, Patna',
+            sub: 'Patna, Bihar 800001'
+        };
+        let activeCategory = 'all';
+        let liveTrackingInterval = null;
+
+        // INITIALIZATION
+        window.onload = function() {
+            renderServices();
+            renderMechanics();
+            updateCartUI();
+        };
+
+        // RENDER SERVICES GRID
+        function renderServices() {
+            const container = document.getElementById('services-container');
+            const searchInput = document.getElementById('service-search-input').value.toLowerCase();
+
+            let filtered = SERVICES_DATA.filter(srv => {
+                const matchesCategory = activeCategory === 'all' || srv.category === activeCategory;
+                const matchesSearch = srv.title.toLowerCase().includes(searchInput) || srv.desc.toLowerCase().includes(searchInput);
+                return matchesCategory && matchesSearch;
+            });
+
+            document.getElementById('service-count').innerText = `${filtered.length} Services Available`;
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full py-12 text-center text-gray-500">
+                        <i class="fa-solid fa-triangle-exclamation text-3xl mb-2 text-amber-500"></i>
+                        <p class="font-bold">No services found matching your search.</p>
+                        <p class="text-xs">Try searching 'flat tire', 'towing' or 'jumpstart'.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = filtered.map(srv => {
+                const inCart = cart.find(item => item.id === srv.id);
+                return `
+                    <div class="bg-white rounded-2xl p-4 border border-gray-200/80 shadow-sm hover:shadow-md transition flex flex-col justify-between space-y-3">
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] font-extrabold ${srv.badgeColor} px-2 py-0.5 rounded-md uppercase tracking-wider">
+                                    ${srv.badge}
+                                </span>
+                                <span class="text-xs text-emerald-700 font-bold bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-lg flex items-center gap-1">
+                                    <i class="fa-solid fa-bolt text-[10px]"></i> ${srv.eta}
+                                </span>
+                            </div>
+
+                            <div class="flex items-start gap-3 pt-1">
+                                <div class="w-10 h-10 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center text-lg shrink-0">
+                                    <i class="${srv.icon}"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-gray-900 text-sm leading-tight">${srv.title}</h3>
+                                    <div class="flex items-center gap-1 text-[11px] text-gray-500 mt-0.5">
+                                        <i class="fa-solid fa-star text-amber-400"></i>
+                                        <span class="font-bold text-gray-800">${srv.rating}</span>
+                                        <span>(${srv.reviews})</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <p class="text-xs text-gray-600 line-clamp-2">${srv.desc}</p>
+                        </div>
+
+                        <div class="flex items-center justify-between pt-2 border-t border-gray-100">
+                            <div>
+                                <div class="text-[10px] text-gray-400 uppercase font-bold">Standard Fee</div>
+                                <div class="text-base font-extrabold text-gray-900">₹${srv.price}</div>
+                            </div>
+
+                            ${inCart ? `
+                                <div class="flex items-center gap-2 bg-slate-900 text-white px-2 py-1 rounded-xl">
+                                    <button onclick="removeFromCart('${srv.id}')" class="w-6 h-6 rounded-lg bg-slate-800 text-amber-400 font-bold hover:bg-slate-700">-</button>
+                                    <span class="text-xs font-bold w-4 text-center">${inCart.quantity}</span>
+                                    <button onclick="addToCart('${srv.id}')" class="w-6 h-6 rounded-lg bg-slate-800 text-amber-400 font-bold hover:bg-slate-700">+</button>
+                                </div>
+                            ` : `
+                                <button onclick="addToCart('${srv.id}')" class="bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs px-4 py-2 rounded-xl transition shadow-sm border border-amber-300 flex items-center gap-1">
+                                    <span>ADD</span>
+                                    <i class="fa-solid fa-plus text-[10px]"></i>
+                                </button>
+                            `}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // RENDER MECHANICS DIRECTORY
+        function renderMechanics() {
+            const container = document.getElementById('mechanics-list');
+            container.innerHTML = MECHANICS_DIRECTORY.map(m => `
+                <div class="bg-gray-50 rounded-xl p-3.5 border border-gray-200 flex items-center justify-between gap-3">
+                    <div class="flex items-center gap-3">
+                        <img src="${m.avatar}" class="w-12 h-12 rounded-full object-cover border-2 border-amber-400 shadow-sm">
+                        <div class="space-y-0.5">
+                            <h4 class="font-bold text-xs text-gray-900 leading-tight">${m.name}</h4>
+                            <div class="text-[11px] text-gray-500 font-medium">${m.specialty}</div>
+                            <div class="flex items-center gap-2 text-[10px]">
+                                <span class="text-amber-700 font-bold"><i class="fa-solid fa-star text-amber-400"></i> ${m.rating}</span>
+                                <span class="text-gray-400">•</span>
+                                <span class="text-emerald-700 font-semibold">${m.dist} (${m.eta})</span>
+                            </div>
+                        </div>
+                    </div>
+                    <a href="tel:${m.phone}" class="bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs px-3 py-2 rounded-xl transition shrink-0 flex items-center gap-1">
+                        <i class="fa-solid fa-phone text-emerald-400 text-xs"></i>
+                        <span>Call</span>
+                    </a>
+                </div>
+            `).join('');
+        }
+
+        // CART ACTIONS
+        function addToCart(serviceId) {
+            const srv = SERVICES_DATA.find(s => s.id === serviceId);
+            const existing = cart.find(item => item.id === serviceId);
+
+            if (existing) {
+                existing.quantity += 1;
+            } else {
+                cart.push({ ...srv, quantity: 1 });
+            }
+
+            updateCartUI();
+            renderServices();
+        }
+
+        function removeFromCart(serviceId) {
+            const index = cart.findIndex(item => item.id === serviceId);
+            if (index !== -1) {
+                if (cart[index].quantity > 1) {
+                    cart[index].quantity -= 1;
+                } else {
+                    cart.splice(index, 1);
+                }
+            }
+            updateCartUI();
+            renderServices();
+        }
+
+        function updateCartUI() {
+            const totalCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+            const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const convenienceFee = totalCount > 0 ? 49 : 0;
+            const grandTotal = subtotal + convenienceFee;
+
+            // Header elements
+            document.getElementById('cart-badge-count').innerText = totalCount;
+            document.getElementById('cart-badge-count').classList.toggle('hidden', totalCount === 0);
+            document.getElementById('cart-header-total').innerText = `₹${grandTotal}`;
+
+            // Mobile Bar elements
+            document.getElementById('mobile-cart-count').innerText = totalCount;
+            document.getElementById('mobile-cart-price').innerText = `₹${grandTotal}`;
+            document.getElementById('mobile-cart-bar').classList.toggle('hidden', totalCount === 0);
+
+            // Bill Summary
+            document.getElementById('bill-subtotal').innerText = `₹${subtotal}`;
+            document.getElementById('bill-fee').innerText = `₹${convenienceFee}`;
+            document.getElementById('bill-total').innerText = `₹${grandTotal}`;
+            document.getElementById('payment-total-display').innerText = `₹${grandTotal}`;
+
+            // Drawer List Render
+            const drawerContainer = document.getElementById('cart-items-container');
+            if (cart.length === 0) {
+                drawerContainer.innerHTML = `
+                    <div class="text-center py-16 text-gray-400 space-y-3">
+                        <i class="fa-solid fa-bag-shopping text-5xl text-gray-300"></i>
+                        <p class="font-bold text-gray-700 text-sm">Your service cart is empty</p>
+                        <p class="text-xs max-w-xs mx-auto">Add instant tire repair, battery jumpstart or mechanic inspection to proceed.</p>
+                    </div>
+                `;
+                document.getElementById('checkout-btn').disabled = true;
+            } else {
+                document.getElementById('checkout-btn').disabled = false;
+                drawerContainer.innerHTML = cart.map(item => `
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-200/80">
+                        <div class="space-y-0.5">
+                            <h4 class="font-bold text-xs text-gray-900">${item.title}</h4>
+                            <div class="text-xs font-extrabold text-amber-600">₹${item.price * item.quantity}</div>
+                        </div>
+
+                        <div class="flex items-center gap-2 bg-white border border-gray-300 px-2 py-1 rounded-lg">
+                            <button onclick="removeFromCart('${item.id}')" class="text-gray-500 font-black hover:text-red-600">-</button>
+                            <span class="text-xs font-bold w-4 text-center">${item.quantity}</span>
+                            <button onclick="addToCart('${item.id}')" class="text-gray-500 font-black hover:text-emerald-600">+</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        // MODALS TOGGLERS
+        function toggleCartDrawer() {
+            const backdrop = document.getElementById('cart-drawer-backdrop');
+            const drawer = document.getElementById('cart-drawer');
+            
+            if (drawer.classList.contains('translate-x-full')) {
+                backdrop.classList.remove('hidden');
+                setTimeout(() => backdrop.classList.remove('opacity-0'), 10);
+                drawer.classList.remove('translate-x-full');
+            } else {
+                backdrop.classList.add('opacity-0');
+                drawer.classList.add('translate-x-full');
+                setTimeout(() => backdrop.classList.add('hidden'), 300);
+            }
+        }
+
+        function filterCategory(cat) {
+            activeCategory = cat;
+            document.querySelectorAll('.cat-tab').forEach(btn => {
+                btn.className = 'cat-tab flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition bg-white text-gray-700 border border-gray-200 hover:bg-gray-100';
+            });
+            
+            const activeBtn = document.getElementById(`cat-btn-${cat}`);
+            if (activeBtn) {
+                activeBtn.className = 'cat-tab active flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition bg-slate-900 text-white shadow-sm';
+            }
+
+            const titles = {
+                'all': 'All Auto Repair & Assistance Services',
+                'emergency': 'Roadside Emergency & Towing Services',
+                'maintenance': 'Periodic Maintenance & Diagnostics',
+                'twowheeler': 'Two-Wheeler Puncture & Care Specials',
+                'ev': 'EV Battery & Charging Support'
+            };
+            document.getElementById('category-title').innerText = titles[cat] || 'Services';
+
+            renderServices();
+        }
+
+        function filterServices() {
+            renderServices();
+        }
+
+        function openLocationModal() {
+            document.getElementById('location-modal').classList.remove('hidden');
+        }
+
+        function closeLocationModal() {
+            document.getElementById('location-modal').classList.add('hidden');
+        }
+
+        function setLocation(main, sub) {
+            currentLocation = { name: main, sub: sub };
+            document.getElementById('header-location-name').innerText = main;
+            document.getElementById('header-location-sub').innerText = sub;
+            document.getElementById('mobile-location-name').innerText = main;
+            document.getElementById('drawer-location-name').innerText = main;
+            closeLocationModal();
+        }
+
+        function detectGPSLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(() => {
+                    setLocation('GPS: Frazer Road, Patna', 'Patna, Bihar 800001');
+                }, () => {
+                    setLocation('Patliputra Colony, Patna', 'Patna, Bihar 800013');
+                });
+            } else {
+                setLocation('Boring Road, Patna', 'Patna, Bihar 800001');
+            }
+        }
+
+        // CHECKOUT & PAYMENT FLOW
+        function proceedToPayment() {
+            if (cart.length === 0) return;
+            toggleCartDrawer();
+            document.getElementById('payment-modal').classList.remove('hidden');
+        }
+
+        function closePaymentModal() {
+            document.getElementById('payment-modal').classList.add('hidden');
+        }
+
+        function switchPayTab(method) {
+            document.querySelectorAll('.pay-tab').forEach(t => {
+                t.className = 'pay-tab flex-1 py-3 px-3 text-center border-b-2 border-transparent hover:text-gray-900';
+            });
+            document.querySelectorAll('.pay-content').forEach(c => c.classList.add('hidden'));
+
+            document.getElementById(`pay-tab-${method}`).className = 'pay-tab active flex-1 py-3 px-3 text-center border-b-2 border-emerald-600 text-emerald-700 bg-white';
+            document.getElementById(`pay-content-${method}`).classList.remove('hidden');
+
+            const btnText = document.getElementById('pay-action-btn-text');
+            if (method === 'cod') {
+                btnText.innerText = 'CONFIRM ORDER (PAY CASH LATER)';
+            } else {
+                btnText.innerText = 'PAY NOW & DISPATCH MECHANIC';
+            }
+        }
+
+        function verifyAndPayUPI() {
+            const input = document.getElementById('upi-id-input').value;
+            if (!input || !input.includes('@')) {
+                alert('Please enter a valid UPI ID (e.g., 9876543210@paytm)');
+                return;
+            }
+            confirmOrderAndStartTracking();
+        }
+
+        function triggerInstantSOS() {
+            cart = [{
+                id: 'srv-sos',
+                title: 'Emergency SOS Roadside Repair Dispatch',
+                price: 299,
+                quantity: 1
+            }];
+            updateCartUI();
+            confirmOrderAndStartTracking();
+        }
+
+        function toggleSOSModal() {
+            triggerInstantSOS();
+        }
+
+        // LIVE TRACKING SIMULATION
+        function confirmOrderAndStartTracking() {
+            closePaymentModal();
+            cart = []; // Clear cart
+            updateCartUI();
+
+            const trackingModal = document.getElementById('tracking-modal');
+            trackingModal.classList.remove('hidden');
+
+            // Set dynamic order ID
+            const randomId = '#MCH-' + Math.floor(1000 + Math.random() * 9000);
+            document.getElementById('tracking-order-id').innerText = randomId;
+            document.getElementById('tracking-address-text').innerText = `${currentLocation.name}, ${currentLocation.sub}`;
+
+            // Reset progress
+            let progressPercent = 20;
+            let eta = 14;
+            document.getElementById('tracking-progress-bar').style.width = '20%';
+            document.getElementById('live-eta-countdown').innerText = `${eta} Mins`;
+
+            const step2Icon = document.getElementById('step-2-icon');
+            const step3Icon = document.getElementById('step-3-icon');
+            const step4Icon = document.getElementById('step-4-icon');
+
+            step2Icon.className = 'w-7 h-7 rounded-full bg-gray-200 text-gray-600 font-bold flex items-center justify-center text-xs';
+            step3Icon.className = 'w-7 h-7 rounded-full bg-gray-200 text-gray-600 font-bold flex items-center justify-center text-xs';
+            step4Icon.className = 'w-7 h-7 rounded-full bg-gray-200 text-gray-600 font-bold flex items-center justify-center text-xs';
+
+            const mechanicPin = document.getElementById('tracking-mechanic-pin');
+            mechanicPin.style.top = '10%';
+            mechanicPin.style.left = '10%';
+
+            if (liveTrackingInterval) clearInterval(liveTrackingInterval);
+
+            // Simulate progress timeline over 12 seconds
+            let step = 1;
+            liveTrackingInterval = setInterval(() => {
+                step++;
+                if (step === 2) {
+                    // Step 2: Mechanic Assigned
+                    progressPercent = 45;
+                    eta = 10;
+                    step2Icon.className = 'w-7 h-7 rounded-full bg-emerald-600 text-white font-bold flex items-center justify-center text-xs';
+                    document.getElementById('assigned-mechanic-status').innerText = 'Mechanic Rajesh assigned! Packing toolkit...';
+                    mechanicPin.style.top = '30%';
+                    mechanicPin.style.left = '35%';
+                } else if (step === 3) {
+                    // Step 3: En Route
+                    progressPercent = 75;
+                    eta = 4;
+                    step3Icon.className = 'w-7 h-7 rounded-full bg-emerald-600 text-white font-bold flex items-center justify-center text-xs';
+                    document.getElementById('assigned-mechanic-status').innerText = 'En route on bike! 1.2 km away...';
+                    mechanicPin.style.top = '60%';
+                    mechanicPin.style.left = '65%';
+                } else if (step >= 4) {
+                    // Step 4: Arrived
+                    progressPercent = 100;
+                    eta = 0;
+                    step4Icon.className = 'w-7 h-7 rounded-full bg-emerald-600 text-white font-bold flex items-center justify-center text-xs';
+                    document.getElementById('assigned-mechanic-status').innerText = 'Mechanic has arrived at your location!';
+                    document.getElementById('live-eta-countdown').innerText = 'ARRIVED';
+                    mechanicPin.style.top = '72%';
+                    mechanicPin.style.left = '78%';
+                    clearInterval(liveTrackingInterval);
+                }
+
+                document.getElementById('tracking-progress-bar').style.width = `${progressPercent}%`;
+                if (eta > 0) document.getElementById('live-eta-countdown').innerText = `${eta} Mins`;
+            }, 3000);
+        }
+
+        function closeTrackingModal() {
+            document.getElementById('tracking-modal').classList.add('hidden');
+        }
+
+        // UTILITY FUNCTIONS
+        function scrollToTop() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function scrollToSection(id) {
+            document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
