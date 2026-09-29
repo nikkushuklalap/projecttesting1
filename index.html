@@ -271,7 +271,7 @@
                 <div class="bg-white p-4 rounded-xl border border-amber-100 text-center space-y-2 shadow-sm">
                     <div class="w-12 h-12 bg-amber-400 text-slate-900 rounded-full flex items-center justify-center font-black text-xl mx-auto shadow">3</div>
                     <h4 class="font-bold text-gray-900 text-sm">On-Spot Service & Easy Pay</h4>
-                    <p class="text-xs text-gray-600">Fixing done on location. Pay securely via UPI, Card, or Cash after work completion.</p>
+                    <p class="text-xs text-gray-600">Fixing done on location. Pay securely via UPI, QR code, Card, or Cash after work completion.</p>
                 </div>
             </div>
         </section>
@@ -383,7 +383,7 @@
         </div>
     </div>
 
-    <!-- MULTI-PAYMENT MODAL -->
+    <!-- MULTI-PAYMENT MODAL (ENHANCED WITH COMPLETE UPI & DYNAMIC QR LOGIC) -->
     <div id="payment-modal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden border border-gray-100 flex flex-col max-h-[90vh]">
             
@@ -416,29 +416,48 @@
                 
                 <!-- UPI Content -->
                 <div id="pay-content-upi" class="pay-content space-y-4 text-center">
-                    <div class="bg-amber-50 border border-amber-200 p-3 rounded-xl text-xs text-amber-900">
-                        Scan QR code with Google Pay, PhonePe, Paytm or BHIM UPI
+                    <div class="bg-amber-50 border border-amber-200 p-3 rounded-xl text-xs text-amber-900 flex items-center justify-between">
+                        <span>Scan QR code with any UPI App</span>
+                        <span class="font-mono bg-white px-2 py-0.5 rounded border border-amber-300 text-[11px] font-bold" id="upi-vpa-display">mechanicit@upi</span>
                     </div>
                     
-                    <!-- Simulated QR Code -->
-                    <div class="bg-white p-3 border-2 border-dashed border-gray-300 rounded-xl inline-block shadow-inner relative">
-                        <img id="upi-qr-image" src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=upi://pay?pa=mechanicit@upi&pn=MechanicIt&am=499" alt="UPI QR Code" class="w-44 h-44 mx-auto">
-                        <div class="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition bg-black/10 rounded-xl">
-                            <span class="bg-slate-900 text-white text-[10px] font-bold px-2 py-1 rounded">Scan with any App</span>
+                    <!-- Dynamic Dynamic QR Code Container -->
+                    <div class="bg-white p-3 border-2 border-dashed border-gray-300 rounded-xl inline-block shadow-inner relative group">
+                        <img id="upi-qr-image" src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=upi://pay?pa=mechanicit@upi%26pn=MechanicIt%26am=0" alt="UPI QR Code" class="w-44 h-44 mx-auto">
+                        <div class="mt-1 text-[11px] font-bold text-gray-600">Amount: <span id="qr-amount-text" class="text-emerald-700 font-extrabold">₹0</span></div>
+                        <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition bg-black/10 rounded-xl">
+                            <span class="bg-slate-900 text-white text-[10px] font-bold px-2 py-1 rounded">Scan to Pay</span>
                         </div>
                     </div>
 
-                    <div class="text-xs text-gray-500 font-medium">OR Enter UPI ID</div>
-                    <div class="flex gap-2">
-                        <input type="text" placeholder="username@upi / mobile@ybl" id="upi-id-input" class="flex-1 px-3 py-2 border border-gray-300 rounded-xl text-xs focus:outline-none focus:border-emerald-500">
-                        <button onclick="verifyAndPayUPI()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-4 py-2 rounded-xl transition">Verify & Pay</button>
+                    <!-- Direct One-Tap Mobile Deep Link Buttons -->
+                    <div class="space-y-1.5">
+                        <div class="text-[11px] text-gray-500 font-bold uppercase tracking-wider">Tap to Pay via Mobile Apps</div>
+                        <div class="grid grid-cols-4 gap-2">
+                            <a id="gpay-link" href="#" class="bg-gray-50 hover:bg-gray-100 border border-gray-200 p-2 rounded-xl flex flex-col items-center justify-center transition">
+                                <i class="fa-brands fa-google-pay text-2xl text-blue-600"></i>
+                                <span class="text-[9px] font-bold text-gray-700 mt-1">GPay</span>
+                            </a>
+                            <a id="phonepe-link" href="#" class="bg-gray-50 hover:bg-gray-100 border border-gray-200 p-2 rounded-xl flex flex-col items-center justify-center transition">
+                                <i class="fa-solid fa-mobile-screen text-xl text-purple-600"></i>
+                                <span class="text-[9px] font-bold text-gray-700 mt-1">PhonePe</span>
+                            </a>
+                            <a id="paytm-link" href="#" class="bg-gray-50 hover:bg-gray-100 border border-gray-200 p-2 rounded-xl flex flex-col items-center justify-center transition">
+                                <span class="text-sm font-black text-blue-800 tracking-tighter">Paytm</span>
+                                <span class="text-[9px] font-bold text-gray-700 mt-1">Paytm</span>
+                            </a>
+                            <a id="generic-upi-link" href="#" class="bg-gray-50 hover:bg-gray-100 border border-gray-200 p-2 rounded-xl flex flex-col items-center justify-center transition">
+                                <i class="fa-solid fa-qrcode text-xl text-emerald-600"></i>
+                                <span class="text-[9px] font-bold text-gray-700 mt-1">Other UPI</span>
+                            </a>
+                        </div>
                     </div>
 
-                    <div class="flex items-center justify-center gap-4 pt-2 opacity-80">
-                        <span class="text-xs font-bold text-gray-400">Supported:</span>
-                        <i class="fa-brands fa-google-pay text-2xl text-blue-600"></i>
-                        <i class="fa-solid fa-mobile-screen text-xl text-purple-600"></i>
-                        <span class="text-xs font-black text-blue-800">Paytm</span>
+                    <div class="text-xs text-gray-400 font-medium my-2">- OR Enter Virtual Payment Address (VPA) -</div>
+                    
+                    <div class="flex gap-2">
+                        <input type="text" placeholder="username@upi / mobile@ybl" id="upi-id-input" class="flex-1 px-3 py-2 border border-gray-300 rounded-xl text-xs focus:outline-none focus:border-emerald-500 font-medium">
+                        <button onclick="verifyAndPayUPI()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-4 py-2 rounded-xl transition shadow">Verify & Pay</button>
                     </div>
                 </div>
 
@@ -482,7 +501,7 @@
             <div class="p-4 bg-gray-50 border-t border-gray-200">
                 <button onclick="confirmOrderAndStartTracking()" class="w-full bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold py-3 rounded-xl transition shadow flex items-center justify-center gap-2 text-sm">
                     <i class="fa-solid fa-lock text-xs"></i>
-                    <span id="pay-action-btn-text">PAY NOW & DISPATCH MECHANIC</span>
+                    <span id="pay-action-btn-text">I HAVE PAID / CONFIRM DISPATCH</span>
                 </button>
             </div>
         </div>
@@ -811,6 +830,7 @@
         };
         let activeCategory = 'all';
         let liveTrackingInterval = null;
+        let merchantUpiVPA = "mechanicit@upi";
 
         // INITIALIZATION
         window.onload = function() {
@@ -973,6 +993,9 @@
             document.getElementById('bill-total').innerText = `₹${grandTotal}`;
             document.getElementById('payment-total-display').innerText = `₹${grandTotal}`;
 
+            // Update Dynamic UPI QR Code & App Deep Links
+            updateUPIPayData(grandTotal);
+
             // Drawer List Render
             const drawerContainer = document.getElementById('cart-items-container');
             if (cart.length === 0) {
@@ -1001,6 +1024,33 @@
                     </div>
                 `).join('');
             }
+        }
+
+        // GENERATE DYNAMIC UPI STRINGS AND QR CODES
+        function updateUPIPayData(amount) {
+            const encodedVpa = encodeURIComponent(merchantUpiVPA);
+            const encodedName = encodeURIComponent('MechanicIt Roadside Assistance');
+            const upiUri = `upi://pay?pa=${encodedVpa}&pn=${encodedName}&am=${amount}&cu=INR&tn=MechanicIt%20Dispatch`;
+            
+            // Dynamic QR Code API
+            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(upiUri)}`;
+            
+            const qrImg = document.getElementById('upi-qr-image');
+            if (qrImg) qrImg.src = qrUrl;
+            
+            const amountTxt = document.getElementById('qr-amount-text');
+            if (amountTxt) amountTxt.innerText = `₹${amount}`;
+
+            // Set up app deep links
+            const gpayBtn = document.getElementById('gpay-link');
+            const phonepeBtn = document.getElementById('phonepe-link');
+            const paytmBtn = document.getElementById('paytm-link');
+            const genericBtn = document.getElementById('generic-upi-link');
+
+            if (gpayBtn) gpayBtn.href = upiUri;
+            if (phonepeBtn) phonepeBtn.href = upiUri;
+            if (paytmBtn) paytmBtn.href = upiUri;
+            if (genericBtn) genericBtn.href = upiUri;
         }
 
         // MODALS TOGGLERS
@@ -1098,6 +1148,8 @@
             const btnText = document.getElementById('pay-action-btn-text');
             if (method === 'cod') {
                 btnText.innerText = 'CONFIRM ORDER (PAY CASH LATER)';
+            } else if (method === 'upi') {
+                btnText.innerText = 'I HAVE PAID / CONFIRM DISPATCH';
             } else {
                 btnText.innerText = 'PAY NOW & DISPATCH MECHANIC';
             }
@@ -1109,6 +1161,7 @@
                 alert('Please enter a valid UPI ID (e.g., 9876543210@paytm)');
                 return;
             }
+            alert(`Payment request sent to VPA: ${input}. Complete authorization in your UPI app.`);
             confirmOrderAndStartTracking();
         }
 
